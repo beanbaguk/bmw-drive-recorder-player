@@ -2,6 +2,9 @@ const el = id => document.getElementById(id);
 const picker = el('picker');
 const dropZone = el('drop-zone');
 const mapOption = el('include-map');
+const vinOption = el('include-vin');
+const vinHelp = el('vin-help');
+const vinDescription = vinHelp.textContent;
 const convert = el('convert');
 const preview = el('preview');
 const placeholder = el('placeholder');
@@ -72,12 +75,19 @@ function stopWorker() {
   worker = undefined;
 }
 
+function updateVinOption() {
+  vinOption.disabled = rendering || !info?.hasVin;
+  if (!info?.hasVin) vinOption.checked = false;
+  vinHelp.textContent = info && !info.hasVin ? 'This recording has no valid VIN.' : vinDescription;
+}
+
 function setRendering(value) {
   rendering = value;
   for (const control of [el('browse'), el('video-slot'), el('metadata-slot'), mapOption, clear]) {
     control.disabled = value;
   }
   convert.disabled = value || !info;
+  updateVinOption();
   progress.hidden = !value;
   cancel.hidden = !value;
 }
@@ -109,6 +119,7 @@ function startWorker(action) {
       showSlot('metadata', true);
       setVerification(`File formats and durations verified · ${info.duration.toFixed(1)} seconds · ${info.sampleCount.toLocaleString()} readings` +
         (info.hasGps ? '' : ' · GPS unavailable'));
+      updateVinOption();
       convert.disabled = false;
     } else if (data.type === 'progress') {
       progress.value = data.value;
@@ -127,7 +138,10 @@ function startWorker(action) {
       resultStatus.textContent = `MP4 ready · ${formatBytes(data.file.size)} · Playback is local to this tab.` + mapNote;
     }
   };
-  active.postMessage({ action, ...files, info, includeRoadMap: mapOption.checked });
+  active.postMessage({
+    action, ...files, info,
+    options: { includeRoadMap: mapOption.checked, includeVin: vinOption.checked }
+  });
 }
 
 function receive(incoming) {
@@ -145,6 +159,7 @@ function receive(incoming) {
 
   stopWorker();
   info = undefined;
+  updateVinOption();
   clearOutput();
   errorMessage('');
   setVerification('');
@@ -225,6 +240,12 @@ convert.onclick = () => {
   startWorker('render');
 };
 
+vinOption.onchange = () => {
+  if (!url) return;
+  clearOutput();
+  resultStatus.textContent = 'VIN setting changed. Convert again to create a new MP4.';
+};
+
 cancel.onclick = () => {
   stopWorker();
   setRendering(false);
@@ -236,6 +257,7 @@ cancel.onclick = () => {
 clear.onclick = () => {
   stopWorker();
   info = undefined;
+  updateVinOption();
   files.video = files.metadata = null;
   clearOutput();
   setVerification('');

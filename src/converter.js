@@ -55,13 +55,17 @@ export async function inspectRecording(video, metadata) {
     if (!await canEncodeVideo('avc', { width: output.width, height: output.height, bitrate: QUALITY_HIGH })) {
       throw new Error('This browser cannot export H.264 at this recording’s size. Try another desktop browser.');
     }
-    return { duration, width, height, sampleCount: telemetry.samples.length, hardwareAcceleration, hasGps: synchronized.points.length > 0 };
+    return {
+      duration, width, height, sampleCount: telemetry.samples.length, hardwareAcceleration,
+      hasGps: synchronized.points.length > 0,
+      hasVin: telemetry.vin !== null
+    };
   } finally {
     input.dispose();
   }
 }
 
-function drawTelemetry(ctx, layout, map, sample) {
+function drawTelemetry(ctx, layout, map, sample, vin) {
   const { width, height, panel } = layout;
   const left = width - panel;
   const pad = 18;
@@ -83,6 +87,7 @@ function drawTelemetry(ctx, layout, map, sample) {
   ctx.fillStyle = '#203653';
   ctx.fillRect(left, 0, 2, height);
   value('Drive Recorder', height * 0.084, 22);
+  if (vin) value(`VIN ${vin}`, height * 0.136, 14, '#c4d4ea');
   label('SPEED', height * 0.185);
   value(`${Math.round(sample.velocity)} km/h`, height * 0.284, 38, '#79b8ff');
   label('RECORDED DATE & TIME', height * 0.387);
@@ -111,8 +116,10 @@ function drawTelemetry(ctx, layout, map, sample) {
   }
 }
 
-export async function renderRecording(video, metadata, info, includeRoadMap, onProgress) {
-  const telemetry = syncTelemetry(await readTelemetry(metadata), info.duration);
+export async function renderRecording(video, metadata, info, { includeRoadMap, includeVin }, onProgress) {
+  const data = await readTelemetry(metadata);
+  const telemetry = syncTelemetry(data, info.duration);
+  const vin = includeVin ? data.vin : null;
   const input = openVideo(video);
   const layout = panelDimensions(info.width, info.height);
   const map = await buildRouteMap(telemetry.points, layout.panel - 36, Math.max(80, Math.floor(layout.height * 0.23)), includeRoadMap);
@@ -131,7 +138,7 @@ export async function renderRecording(video, metadata, info, includeRoadMap, onP
         processedHeight: layout.height,
         process(sample) {
           sample.draw(ctx, 0, 0, info.width, info.height);
-          drawTelemetry(ctx, layout, map, telemetry.at(sample.timestamp));
+          drawTelemetry(ctx, layout, map, telemetry.at(sample.timestamp), vin);
           return canvas;
         }
       }

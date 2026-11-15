@@ -67,9 +67,13 @@
           </button>
         </div>
 
-        <div class="map-option">
+        <div class="export-option">
           <label><input id="include-map" type="checkbox"> Include road map</label>
           <p>The GPS route is drawn locally. Adding background roads shares the approximate map area with the map provider.</p>
+        </div>
+        <div class="export-option">
+          <label><input id="include-vin" type="checkbox" aria-describedby="vin-help" disabled> Include VIN in video</label>
+          <p id="vin-help">Makes the vehicle identification number visible in the saved MP4.</p>
         </div>
         <p id="error" class="error" role="alert" hidden></p>
         <p id="verification" class="verification" role="status" hidden></p>

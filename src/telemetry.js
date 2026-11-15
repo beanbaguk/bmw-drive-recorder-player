@@ -65,7 +65,12 @@ export async function readTelemetry(file) {
     ? (lastTransition.id - firstTransition.id) / (lastTransition.clock - firstTransition.clock)
     : null;
   const sampleRate = measuredRate > 0 && Number.isFinite(measuredRate) ? measuredRate : null;
-  return { samples, gps, sampleRate, clockSpan: previousClock - firstClock };
+  const rawVin = data[0].VIN;
+  const vin = typeof rawVin === 'string' ? rawVin.trim() : '';
+  return {
+    samples, gps, sampleRate, clockSpan: previousClock - firstClock,
+    vin: /^[A-HJ-NPR-Z0-9]{17}$/i.test(vin) ? vin.toUpperCase() : null
+  };
 }
 
 export function syncTelemetry(telemetry, duration) {
