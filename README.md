@@ -4,6 +4,16 @@ A free, open-source tool for BMW enthusiasts. Convert a BMW Drive Recorder USB e
 
 This independent project is not affiliated with or endorsed by BMW. The BMW name identifies the compatible recording format.
 
+## Open or download
+
+| Choose how to use it | |
+| --- | --- |
+| **Web or Chrome app** | [Open the free player](https://beanbaguk.github.io/bmw-drive-recorder-player/). On desktop Chrome, use **Get the app** for installation instructions. |
+| **Mac with Apple Silicon** | [Download for Mac (.dmg)](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.1/BMW-Drive-Recorder-Player-1.0.1-mac-arm64.dmg). This build is unnotarized and macOS may block it. |
+| **Windows 64-bit** | [Download for Windows (.exe)](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.1/BMW-Drive-Recorder-Player-1.0.1-windows-x64-setup.exe). The unsigned installer may show a security warning. |
+
+[Release notes and file checksums](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/tag/v1.0.1)
+
 ## Use the player
 
 1. Export a Drive Recorder recording from the vehicle to a USB drive.

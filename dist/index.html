@@ -5,11 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="An independent tool for BMW enthusiasts. Play BMW Drive Recorder footage with speed, date, time and GPS, and export an MP4 in your browser.">
   <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#f4f6f9">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://tiles.openfreemap.org; media-src blob:; form-action 'none'; object-src 'none'; base-uri 'none'">
   <title>BMW Drive Recorder Player</title>
   <link rel="icon" href="./assets/recorder.svg" type="image/svg+xml">
+  <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./assets/style.css">
   <script type="module" src="./assets/player.js"></script>
+  <script type="module" src="./assets/install.js"></script>
 </head>
 <body>
   <svg xmlns="http://www.w3.org/2000/svg" class="symbols" aria-hidden="true">
@@ -26,7 +29,10 @@
   <header class="site-header">
     <div class="wrap header-inner">
       <div class="brand"><img src="./assets/recorder.svg" width="36" height="36" alt=""><span>Drive Recorder Player</span></div>
-      <span class="privacy-label"><svg class="icon" aria-hidden="true"><use href="#icon-lock"/></svg> Local processing</span>
+      <div class="header-actions">
+        <span class="privacy-label"><svg class="icon" aria-hidden="true"><use href="#icon-lock"/></svg> Local processing</span>
+        <a id="get-app-link" class="header-link" href="#get-the-app" hidden>Get the app</a>
+      </div>
     </div>
   </header>
   <main class="wrap">
@@ -104,6 +110,32 @@
         </div>
       </section>
     </div>
+
+    <section id="get-the-app" class="card get-app" aria-labelledby="get-app-heading" hidden>
+      <div class="card-heading">
+        <span class="step-icon"><svg class="icon" aria-hidden="true"><use href="#icon-download"/></svg></span>
+        <div><h2 id="get-app-heading">Get the app</h2><p>Free to use. Choose Chrome or download the desktop app.</p></div>
+      </div>
+      <div class="get-app-grid">
+        <div id="chrome-install" class="get-app-option">
+          <h3>Install through Chrome</h3>
+          <p>Open Chrome’s <strong>⋮</strong> menu, choose <strong>Cast, save, and share</strong>, then <strong>Install page as app</strong>.</p>
+          <button id="install-app" class="button download" type="button" hidden>Install with Chrome</button>
+          <p id="install-status" role="status" hidden>Drive Recorder Player is installed.</p>
+        </div>
+        <div class="get-app-option">
+          <h3>Mac with Apple Silicon</h3>
+          <p>The desktop build is unnotarized. macOS may block it. The Chrome install above avoids this.</p>
+          <a class="button download" href="https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.1/BMW-Drive-Recorder-Player-1.0.1-mac-arm64.dmg">Download for Mac</a>
+        </div>
+        <div class="get-app-option">
+          <h3>Windows 64-bit</h3>
+          <p>The installer is unsigned. Windows may show a security warning.</p>
+          <a class="button download" href="https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.1/BMW-Drive-Recorder-Player-1.0.1-windows-x64-setup.exe">Download for Windows</a>
+        </div>
+      </div>
+      <a class="release-link" href="https://github.com/beanbaguk/bmw-drive-recorder-player/releases/tag/v1.0.1">Release notes and file checksums</a>
+    </section>
   </main>
   <footer class="wrap footer"><span>Independent project for BMW enthusiasts.</span><span>Video and metadata stay on your device.</span></footer>
 </body>

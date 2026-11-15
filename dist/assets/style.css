@@ -18,6 +18,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,video:focus-visible{out
 .brand img{display:block}
 .privacy-label{gap:7px;font-size:12px;font-weight:590;color:#46566a}
 .privacy-label .icon{width:16px;height:16px;color:var(--blue)}
+.header-actions{display:flex;align-items:center;gap:16px}
+.header-link,.release-link{color:var(--blue);font-size:12px;font-weight:680;text-underline-offset:3px}
 .hero{position:relative;overflow:hidden;isolation:isolate;margin:28px 0 24px;min-height:288px;display:flex;align-items:center;background:#101c2e url("./mountain-drive.jpg") center 55%/cover no-repeat;border-radius:14px;color:#fff}
 .hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#081527 4%,rgba(8,21,39,.95) 28%,rgba(8,21,39,.65) 49%,rgba(8,21,39,.08) 81%)}
 .hero-copy{padding:38px 44px;max-width:515px}
@@ -78,7 +80,15 @@ progress{width:min(210px,100%);height:8px;accent-color:#5cafff}
 .download{color:#174777;background:#f0f6fe;border-color:#d9e7f8}
 .download[href]:hover{background:#e1efff}
 .download[aria-disabled="true"]{color:#526984;background:#f1f4f8;border-color:#e2e9f2}
+.get-app{margin-top:22px;scroll-margin-top:16px}
+.get-app-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(215px,100%),1fr));gap:10px}
+.get-app-option{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:14px;border:1px solid var(--line);border-radius:8px}
+.get-app-option h3{margin:0;font-size:14px;font-weight:680}
+.get-app-option p{flex:1;color:var(--muted);font-size:12px;line-height:1.5}
+.get-app-option .button{min-height:36px}
+.release-link{align-self:flex-start;margin-top:15px}
 .footer{padding:19px 0 22px;display:flex;justify-content:space-between;gap:10px 20px;flex-wrap:wrap;color:#58677a;font-size:11px}
 @media(max-width:780px){.wrap{width:calc(100% - 40px)}.workspace{gap:14px}.card{padding:16px}.hero-copy{padding:32px}.hero{min-height:254px}}
 @media(max-width:660px){.workspace{grid-template-columns:1fr}.hero{margin:17px 0;border-radius:10px;background-position:60% center}.hero::before{background:linear-gradient(90deg,#081527 2%,rgba(8,21,39,.93) 38%,rgba(8,21,39,.46) 100%)}.hero-copy{padding:25px}.hero p{font-size:14px}.header-inner{min-height:61px}.brand{font-size:13px;gap:8px}.brand img{width:30px;height:30px}.privacy-label{font-size:11px}.card-heading h2{font-size:19px}.footer{padding-top:15px}}
+@media(max-width:460px){.header-actions:has(.header-link:not([hidden])) .privacy-label{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important}}

@@ -1,0 +1,15 @@
+{
+  "id": "./",
+  "name": "BMW Drive Recorder Player",
+  "short_name": "Drive Recorder",
+  "description": "Play BMW Drive Recorder footage and save it as an MP4 on your device.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f9",
+  "theme_color": "#f4f6f9",
+  "icons": [
+    { "src": "./assets/recorder-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./assets/recorder-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
