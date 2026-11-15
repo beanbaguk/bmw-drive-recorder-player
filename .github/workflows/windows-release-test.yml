@@ -1,0 +1,45 @@
+name: Windows v1.0.1 release test
+on:
+  push:
+    branches: [qa/windows-v1.0.1]
+permissions:
+  contents: read
+jobs:
+  test-windows-installer:
+    runs-on: windows-2025
+    timeout-minutes: 12
+    steps:
+      - name: Download and install the published x64 build
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $workDir = Join-Path $env:RUNNER_TEMP 'bmw-win-release-qa'
+          New-Item -ItemType Directory -Path $workDir | Out-Null
+          $setup = Join-Path $workDir 'BMW-Drive-Recorder-Player-1.0.1-windows-x64-setup.exe'
+          $url = 'https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.1/BMW-Drive-Recorder-Player-1.0.1-windows-x64-setup.exe'
+          Invoke-WebRequest -Uri $url -OutFile $setup
+          $expected = '48826b213ae094f39d0d3ffb9cf97615c65898eaa50f818e687648a2c8553af4'
+          if ((Get-FileHash -Algorithm SHA256 $setup).Hash -ne $expected) { throw 'Installer checksum mismatch' }
+          $installDir = Join-Path $workDir 'installed'
+          $result = Start-Process -FilePath $setup -ArgumentList "/S /D=$installDir" -Wait -PassThru
+          if ($result.ExitCode -ne 0) { throw "Installer failed: $($result.ExitCode)" }
+          $exe = Join-Path $installDir 'BMW Drive Recorder Player.exe'
+          if (-not (Test-Path -LiteralPath $exe)) { throw 'Installed executable missing' }
+          "BMW_QA_DIR=$workDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "BMW_QA_EXE=$exe" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "PASS: exact GitHub Release installer completed successfully on Windows $([Environment]::OSVersion.Version)."
+      - name: Open a recording and verify the exported MP4
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          npm install --prefix $env:BMW_QA_DIR --no-fund --no-audit --no-save playwright-core@1.65.1 ffmpeg-static@5.3.0
+          if ($LASTEXITCODE -ne 0) { throw 'Could not install the test tools' }
+          $testScript = Join-Path $env:BMW_QA_DIR 'qa.cjs'
+          git clone --depth=1 --branch qa/windows-v1.0.1 "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY.git" (Join-Path $env:BMW_QA_DIR 'source')
+          if ($LASTEXITCODE -ne 0) { throw 'Could not read the test script' }
+          $source = Join-Path $env:BMW_QA_DIR 'source'
+          $checkedOut = git -C $source rev-parse HEAD
+          if ($checkedOut -ne $env:GITHUB_SHA) { throw 'Test branch changed before checkout' }
+          Copy-Item -LiteralPath (Join-Path $source 'qa/windows-release.cjs') -Destination $testScript
+          node $testScript $env:BMW_QA_EXE $env:BMW_QA_DIR
+          if ($LASTEXITCODE -ne 0) { throw 'Windows playback or export failed' }
