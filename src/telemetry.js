@@ -1,15 +1,17 @@
+import { RecordingError } from './i18n.js';
+
 const clockPattern = /^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})$/;
 
 function clockValue(date, time) {
   const match = clockPattern.exec(date + ' ' + time);
-  if (!match) throw new Error('The metadata has an invalid date or time.');
+  if (!match) throw new RecordingError('invalidTime');
   const [, dd, mm, yyyy, hh, min, ss] = match.map(Number);
   // UTC is only used for arithmetic. The video displays the BMW clock verbatim.
   const stamp = Date.UTC(yyyy, mm - 1, dd, hh, min, ss);
   const parsed = new Date(stamp);
   if (parsed.getUTCFullYear() !== yyyy || parsed.getUTCMonth() !== mm - 1 ||
       parsed.getUTCDate() !== dd || hh > 23 || min > 59 || ss > 59) {
-    throw new Error('The metadata has an invalid date or time.');
+    throw new RecordingError('invalidTime');
   }
   return stamp / 1000;
 }
@@ -20,16 +22,16 @@ function validGps(latitude, longitude) {
 }
 
 export async function readTelemetry(file) {
-  if (file.size > 32 * 1024 * 1024) throw new Error('The metadata file is too large for this player.');
+  if (file.size > 32 * 1024 * 1024) throw new RecordingError('metadataTooLarge');
   let data;
   try {
     data = JSON.parse(await file.text());
   } catch {
-    throw new Error('Choose a readable BMW Metadata.json file.');
+    throw new RecordingError('unreadableMetadata');
   }
   if (!Array.isArray(data) || data.length !== 1 || !Array.isArray(data[0]?.entries) ||
       data[0].entries.length < 2) {
-    throw new Error('This JSON does not contain a supported BMW Drive Recorder recording.');
+    throw new RecordingError('unsupportedMetadata');
   }
 
   let previousId = -Infinity;
@@ -41,13 +43,13 @@ export async function readTelemetry(file) {
     const { id, date, time, velocity, latitude, longitude } = entry ?? {};
     if (!Number.isSafeInteger(id) || id <= previousId || typeof date !== 'string' ||
         typeof time !== 'string' || !Number.isFinite(velocity) || velocity < 0) {
-      throw new Error('The metadata has a missing or invalid recording sample.');
+      throw new RecordingError('invalidReading');
     }
     previousId = id;
     const key = date + ' ' + time;
     if (key !== clockKey) {
       const clock = clockValue(date, time);
-      if (clock < previousClock) throw new Error('The recording clock moves backwards in this file.');
+      if (clock < previousClock) throw new RecordingError('reversedClock');
       if (index > 0) transitions.push({ id, clock });
       previousClock = clock;
       clockKey = key;
@@ -79,7 +81,7 @@ export function syncTelemetry(telemetry, duration) {
   const idSpan = samples.at(-1).id - startId;
   if (Math.abs(clockSpan - duration) > Math.max(2, duration * 0.06) ||
       (sampleRate && Math.abs(idSpan / sampleRate - duration) > Math.max(2, duration * 0.06))) {
-    throw new Error('The video and metadata have different recording lengths. Choose files from the same export.');
+    throw new RecordingError('mismatchedDuration');
   }
   const rate = sampleRate ?? idSpan / duration;
   const points = gps.map(fix => ({ ...fix, offset: (fix.id - startId) / rate }));

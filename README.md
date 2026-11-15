@@ -9,10 +9,10 @@ This independent project is not affiliated with or endorsed by BMW. The BMW name
 | Choose how to use it | |
 | --- | --- |
 | **Web or Chrome app** | [Open the free player](https://beanbaguk.github.io/bmw-drive-recorder-player/). On desktop Chrome, use **Get the app** for installation instructions. |
-| **Mac with Apple Silicon** | [Download for Mac (.dmg)](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.1/BMW-Drive-Recorder-Player-1.0.1-mac-arm64.dmg). This build is unnotarized and macOS may block it. |
-| **Windows 64-bit** | [Download for Windows (.exe)](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.1/BMW-Drive-Recorder-Player-1.0.1-windows-x64-setup.exe). The unsigned installer may show a security warning. |
+| **Mac with Apple Silicon** | [Download for Mac (.dmg)](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.2/BMW-Drive-Recorder-Player-1.0.2-mac-arm64.dmg). This build is unnotarized and macOS may block it. |
+| **Windows 64-bit** | [Download for Windows (.exe)](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.2/BMW-Drive-Recorder-Player-1.0.2-windows-x64-setup.exe). The unsigned installer may show a security warning. |
 
-[Release notes and file checksums](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/tag/v1.0.1)
+[Release notes and file checksums](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/tag/v1.0.2)
 
 ## Use the player
 
@@ -22,6 +22,8 @@ This independent project is not affiliated with or endorsed by BMW. The BMW name
 4. Select **Convert to MP4**, play the result, then select **Download MP4** to save it.
 
 Conversion and playback run on your computer. The GPS route is drawn locally. The optional **Include road map** setting requests background tiles from OpenFreeMap, which reveals the approximate map area to the provider. The app never uploads the source files or stores a copy of the rendered video online.
+
+The player and video overlay labels appear in Spanish when the browser or desktop system uses Spanish as its primary language. Other languages use English. The video displays the date and time stored in the recording.
 
 ## Build from source
 
@@ -52,7 +54,7 @@ npm run package:mac -- \
 Submit the signed disk image from `release/`. Replace the filename below with the one from your build.
 
 ```sh
-DMG="release/BMW-Drive-Recorder-Player-1.0.1-mac-arm64.dmg"
+DMG="release/BMW-Drive-Recorder-Player-1.0.2-mac-arm64.dmg"
 xcrun notarytool submit "$DMG" --keychain-profile "drive-recorder-notary" --wait
 ```
 

@@ -1,6 +1,7 @@
 import { BlobSource, BufferTarget, Conversion, Input, MPEG_TS, Mp4OutputFormat, Output, QUALITY_HIGH, VideoSampleSink, canEncodeVideo } from 'mediabunny';
 import { readTelemetry, syncTelemetry } from './telemetry.js';
 import { buildRouteMap } from './road-map.js';
+import { messagesFor, RecordingError } from './i18n.js';
 
 function openVideo(file) {
   return new Input({ source: new BlobSource(file), formats: [MPEG_TS] });
@@ -28,13 +29,13 @@ export async function inspectRecording(video, metadata) {
       [width, height] = await Promise.all([track.getDisplayWidth(), track.getDisplayHeight()]);
       if (!Number.isFinite(duration) || duration <= 0 || width <= 0 || height <= 0) throw new Error();
     } catch {
-      throw new Error('The .ts file could not be read as a video. Choose an intact BMW Drive Recorder export.');
+      throw new RecordingError('invalidVideo');
     }
 
     const telemetry = await readTelemetry(metadata);
     const synchronized = syncTelemetry(telemetry, duration);
     if (!self.isSecureContext || typeof VideoEncoder === 'undefined' || typeof VideoDecoder === 'undefined') {
-      throw new Error('MP4 conversion needs a secure page and a browser with video encoding. Try a current version of desktop Chrome or Safari.');
+      throw new RecordingError('needsEncoding');
     }
     let hardwareAcceleration;
     for (const mode of ['prefer-software', 'no-preference']) {
@@ -49,11 +50,11 @@ export async function inspectRecording(video, metadata) {
       }
     }
     if (!hardwareAcceleration) {
-      throw new Error('This browser could not decode the BMW video. Open the player in desktop Google Chrome and choose the files again.');
+      throw new RecordingError('failedDecode');
     }
     const output = panelDimensions(width, height);
     if (!await canEncodeVideo('avc', { width: output.width, height: output.height, bitrate: QUALITY_HIGH })) {
-      throw new Error('This browser cannot export H.264 at this recording’s size. Try another desktop browser.');
+      throw new RecordingError('unsupportedSize');
     }
     return {
       duration, width, height, sampleCount: telemetry.samples.length, hardwareAcceleration,
@@ -65,7 +66,7 @@ export async function inspectRecording(video, metadata) {
   }
 }
 
-function drawTelemetry(ctx, layout, map, sample, vin) {
+function drawTelemetry(ctx, layout, map, sample, vin, messages) {
   const { width, height, panel } = layout;
   const left = width - panel;
   const pad = 18;
@@ -74,7 +75,7 @@ function drawTelemetry(ctx, layout, map, sample, vin) {
   const label = (text, baseline) => {
     ctx.fillStyle = '#a9bad0';
     ctx.font = `600 ${Math.max(11, 13 * s)}px sans-serif`;
-    ctx.fillText(text, x, baseline);
+    ctx.fillText(text, x, baseline, panel - 2 * pad);
   };
   const value = (text, baseline, size, color = '#f3f7fe') => {
     ctx.fillStyle = color;
@@ -88,16 +89,16 @@ function drawTelemetry(ctx, layout, map, sample, vin) {
   ctx.fillRect(left, 0, 2, height);
   value('Drive Recorder', height * 0.084, 22);
   if (vin) value(`VIN ${vin}`, height * 0.136, 14, '#c4d4ea');
-  label('SPEED', height * 0.185);
+  label(messages.speed, height * 0.185);
   value(`${Math.round(sample.velocity)} km/h`, height * 0.284, 38, '#79b8ff');
-  label('RECORDED DATE & TIME', height * 0.387);
+  label(messages.recordedTime, height * 0.387);
   value(sample.date, height * 0.445, 23);
   value(sample.time, height * 0.504, 22);
-  label('GPS POSITION', height * 0.614);
+  label(messages.gpsPosition, height * 0.614);
   if (sample.fix) {
     value(`${sample.fix.latitude.toFixed(5)}, ${sample.fix.longitude.toFixed(5)}`, height * 0.669, 17);
   } else {
-    value('Unavailable', height * 0.669, 17);
+    value(messages.unavailable, height * 0.669, 17);
   }
 
   const y = height * 0.72;
@@ -116,7 +117,8 @@ function drawTelemetry(ctx, layout, map, sample, vin) {
   }
 }
 
-export async function renderRecording(video, metadata, info, { includeRoadMap, includeVin }, onProgress) {
+export async function renderRecording(video, metadata, info, { includeRoadMap, includeVin, language }, onProgress) {
+  const messages = messagesFor(language);
   const data = await readTelemetry(metadata);
   const telemetry = syncTelemetry(data, info.duration);
   const vin = includeVin ? data.vin : null;
@@ -138,22 +140,22 @@ export async function renderRecording(video, metadata, info, { includeRoadMap, i
         processedHeight: layout.height,
         process(sample) {
           sample.draw(ctx, 0, 0, info.width, info.height);
-          drawTelemetry(ctx, layout, map, telemetry.at(sample.timestamp), vin);
+          drawTelemetry(ctx, layout, map, telemetry.at(sample.timestamp), vin, messages);
           return canvas;
         }
       }
     });
     if (!conversion.isValid || conversion.discardedTracks.some(({ track }) => track.type === 'video')) {
-      throw new Error('This browser could not create an MP4 for this recording. Try desktop Chrome or Safari.');
+      throw new RecordingError('unsupportedExport');
     }
     conversion.onProgress = onProgress;
     try {
       await conversion.execute();
     } catch (error) {
       if (!['EncodingError', 'NotSupportedError', 'DataError'].includes(error?.name)) throw error;
-      throw new Error('The browser could not finish converting this video. Try desktop Google Chrome or another BMW export.');
+      throw new RecordingError('failedExport');
     }
-    if (!target.buffer?.byteLength) throw new Error('The recording produced an empty MP4.');
+    if (!target.buffer?.byteLength) throw new RecordingError('emptyExport');
     return { file: new Blob([target.buffer], { type: 'video/mp4' }), roads: map.roads };
   } finally {
     input.dispose();

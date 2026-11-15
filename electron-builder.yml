@@ -4,6 +4,7 @@ directories:
   output: release
 files:
   - desktop/main.cjs
+  - src/i18n.js
   - dist/index.html
   - dist/assets/**
   - LICENSE

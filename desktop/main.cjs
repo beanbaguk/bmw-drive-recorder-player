@@ -2,7 +2,7 @@ const { app, BrowserWindow, net, protocol, session } = require('electron');
 const { basename, join } = require('node:path');
 const { pathToFileURL } = require('node:url');
 
-const playerURL = 'recorder://player/';
+const playerURL = new URL('recorder://player/');
 const siteDirectory = join(app.getAppPath(), 'dist');
 
 protocol.registerSchemesAsPrivileged([{
@@ -38,10 +38,14 @@ async function createWindow(playerSession) {
   win.setMenuBarVisibility(false);
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.webContents.on('will-navigate', event => event.preventDefault());
-  await win.loadURL(playerURL);
+  await win.loadURL(playerURL.href);
 }
 
 app.whenReady().then(async () => {
+  const { languageFor, messagesFor } = await import('../src/i18n.js');
+  const language = languageFor(app.getPreferredSystemLanguages()[0] || app.getLocale());
+  const messages = messagesFor(language);
+  playerURL.searchParams.set('locale', language);
   const playerSession = session.fromPartition('recorder-desktop');
   playerSession.protocol.handle('recorder', loadAsset);
   playerSession.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
@@ -53,9 +57,9 @@ app.whenReady().then(async () => {
     }
     const filename = basename(item.getFilename());
     item.setSaveDialogOptions({
-      title: 'Save MP4',
+      title: messages.saveTitle,
       defaultPath: join(app.getPath('downloads'), filename),
-      filters: [{ name: 'MP4 video', extensions: ['mp4'] }],
+      filters: [{ name: messages.saveFileType, extensions: ['mp4'] }],
       dontAddToRecent: true
     });
   });

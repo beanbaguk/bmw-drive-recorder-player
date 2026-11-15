@@ -1,3 +1,25 @@
+import { languageFor, messagesFor, pageSpanish } from './i18n.js';
+
+const locale = location.protocol === 'recorder:'
+  ? new URLSearchParams(location.search).get('locale') || navigator.language
+  : navigator.language;
+const language = languageFor(locale);
+const messages = messagesFor(language);
+document.documentElement.lang = language;
+if (language === 'es') {
+  for (const element of document.querySelectorAll('[data-i18n]')) {
+    element.textContent = pageSpanish[element.dataset.i18n];
+  }
+  for (const element of document.querySelectorAll('[data-i18n-label]')) {
+    element.setAttribute('aria-label', pageSpanish[element.dataset.i18nLabel]);
+  }
+  document.querySelector('meta[name="description"]').content = pageSpanish.description;
+}
+
+const decimal = new Intl.NumberFormat(language, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const integer = new Intl.NumberFormat(language);
+const percent = new Intl.NumberFormat(language, { style: 'percent' });
+
 const el = id => document.getElementById(id);
 const picker = el('picker');
 const dropZone = el('drop-zone');
@@ -17,10 +39,12 @@ const verification = el('verification');
 const resultStatus = el('result-status');
 const files = { video: null, metadata: null };
 const defaults = {
-  video: ['Recorder video', '.ts file'],
-  metadata: ['Recording metadata', 'Metadata.json']
+  video: [el('video-title').textContent, el('video-detail').textContent],
+  metadata: [el('metadata-title').textContent, el('metadata-detail').textContent]
 };
-const resultHelp = 'Playback is local to this tab. Download the MP4 to keep a copy.';
+const resultHelp = resultStatus.textContent;
+const playerTitle = el('player-title').textContent;
+const playerDetail = el('player-detail').textContent;
 let worker;
 let info;
 let url;
@@ -38,7 +62,7 @@ function setVerification(message) {
 }
 
 function formatBytes(bytes) {
-  return bytes < 1024 * 1024 ? `${Math.round(bytes / 1024)} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return bytes < 1024 * 1024 ? `${integer.format(Math.round(bytes / 1024))} KB` : `${decimal.format(bytes / (1024 * 1024))} MB`;
 }
 
 function showSlot(name, verified) {
@@ -46,7 +70,7 @@ function showSlot(name, verified) {
   const [title, detail] = defaults[name];
   el(name + '-title').textContent = file?.name ?? title;
   el(name + '-title').title = file?.name ?? '';
-  el(name + '-detail').textContent = file ? (verified ? 'Verified · ' : '') + formatBytes(file.size) : detail;
+  el(name + '-detail').textContent = file ? (verified ? `${messages.verified} · ` : '') + formatBytes(file.size) : detail;
   el(name + '-state').setAttribute('href', verified ? '#icon-check' : '#icon-plus');
   el(name + '-slot').classList.toggle('verified', verified);
 }
@@ -62,8 +86,8 @@ function clearOutput() {
   download.removeAttribute('download');
   download.setAttribute('aria-disabled', 'true');
   placeholder.hidden = false;
-  el('player-title').textContent = 'Your video will appear here';
-  el('player-detail').textContent = 'Convert a recording to preview the MP4.';
+  el('player-title').textContent = playerTitle;
+  el('player-detail').textContent = playerDetail;
   resultStatus.textContent = resultHelp;
   progress.value = 0;
   progress.hidden = true;
@@ -78,7 +102,7 @@ function stopWorker() {
 function updateVinOption() {
   vinOption.disabled = rendering || !info?.hasVin;
   if (!info?.hasVin) vinOption.checked = false;
-  vinHelp.textContent = info && !info.hasVin ? 'This recording has no valid VIN.' : vinDescription;
+  vinHelp.textContent = info && !info.hasVin ? messages.noVin : vinDescription;
 }
 
 function setRendering(value) {
@@ -106,7 +130,7 @@ function startWorker(action) {
   const active = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
   worker = active;
   active.onerror = () => {
-    if (worker === active) failWork('The video converter stopped. Try again in a current desktop browser.');
+    if (worker === active) failWork(messages.stopped);
   };
   active.onmessage = ({ data }) => {
     if (worker !== active) return;
@@ -117,13 +141,12 @@ function startWorker(action) {
       stopWorker();
       showSlot('video', true);
       showSlot('metadata', true);
-      setVerification(`File formats and durations verified · ${info.duration.toFixed(1)} seconds · ${info.sampleCount.toLocaleString()} readings` +
-        (info.hasGps ? '' : ' · GPS unavailable'));
+      setVerification(messages.verification(decimal.format(info.duration), integer.format(info.sampleCount), info.hasGps));
       updateVinOption();
       convert.disabled = false;
     } else if (data.type === 'progress') {
       progress.value = data.value;
-      el('player-detail').textContent = `Rendering your recording · ${Math.round(data.value * 100)}%`;
+      el('player-detail').textContent = messages.rendering(percent.format(data.value));
     } else if (data.type === 'finished') {
       stopWorker();
       setRendering(false);
@@ -134,12 +157,12 @@ function startWorker(action) {
       download.href = url;
       download.download = files.video.name.replace(/\.ts$/i, '') + '_with_telemetry.mp4';
       download.removeAttribute('aria-disabled');
-      const mapNote = mapOption.checked && info.hasGps && !data.roads ? ' Road map unavailable. The MP4 shows the GPS route.' : '';
-      resultStatus.textContent = `MP4 ready · ${formatBytes(data.file.size)} · Playback is local to this tab.` + mapNote;
+      const mapNote = mapOption.checked && info.hasGps && !data.roads ? ` ${messages.mapUnavailable}` : '';
+      resultStatus.textContent = messages.mp4Ready(formatBytes(data.file.size)) + mapNote;
     }
   };
   active.postMessage({
-    action, ...files, info,
+    action, ...files, info, language,
     options: { includeRoadMap: mapOption.checked, includeVin: vinOption.checked }
   });
 }
@@ -149,11 +172,11 @@ function receive(incoming) {
   const videos = incoming.filter(file => /\.ts$/i.test(file.name));
   const metadata = incoming.filter(file => /\.json$/i.test(file.name));
   if (videos.length > 1 || metadata.length > 1 || !videos.length && !metadata.length) {
-    errorMessage('Choose one .ts recording and one matching JSON file.');
+    errorMessage(messages.invalidPair);
     return;
   }
   if ([...videos, ...metadata].some(file => !file.size)) {
-    errorMessage('One of the selected files is empty. Choose the original BMW export files.');
+    errorMessage(messages.emptyFile);
     return;
   }
 
@@ -169,7 +192,7 @@ function receive(incoming) {
   clear.hidden = false;
   convert.disabled = true;
   if (files.video && files.metadata) {
-    setVerification('Checking video and metadata…');
+    setVerification(messages.checkFiles);
     startWorker('inspect');
   }
 }
@@ -220,7 +243,7 @@ dropZone.addEventListener('drop', async event => {
   try {
     receive(await droppedFiles(event.dataTransfer));
   } catch {
-    errorMessage('The recording folder could not be opened. Choose its .ts and JSON files directly.');
+    errorMessage(messages.failedFolder);
   }
 });
 for (const type of ['dragover', 'drop']) {
@@ -234,23 +257,23 @@ convert.onclick = () => {
   clearOutput();
   errorMessage('');
   setRendering(true);
-  el('player-title').textContent = 'Creating your MP4';
-  el('player-detail').textContent = mapOption.checked && info.hasGps ? 'Preparing the road map…' : 'Preparing the video…';
-  resultStatus.textContent = 'Keep this tab open while the browser renders the recording.';
+  el('player-title').textContent = messages.creating;
+  el('player-detail').textContent = mapOption.checked && info.hasGps ? messages.preparingMap : messages.preparingVideo;
+  resultStatus.textContent = messages.stayOpen;
   startWorker('render');
 };
 
 vinOption.onchange = () => {
   if (!url) return;
   clearOutput();
-  resultStatus.textContent = 'VIN setting changed. Convert again to create a new MP4.';
+  resultStatus.textContent = messages.vinChanged;
 };
 
 cancel.onclick = () => {
   stopWorker();
   setRendering(false);
   clearOutput();
-  resultStatus.textContent = 'Conversion cancelled. You can export the recording again.';
+  resultStatus.textContent = messages.cancelled;
   convert.focus();
 };
 
@@ -269,5 +292,5 @@ clear.onclick = () => {
 };
 
 preview.addEventListener('error', () => {
-  if (url) resultStatus.textContent = 'This browser could not play the MP4. You can still download the file.';
+  if (url) resultStatus.textContent = messages.failedPlayback;
 });
