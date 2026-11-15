@@ -1,0 +1,26 @@
+{
+  "name": "bmw-drive-recorder-player",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/player.js src/worker.js --bundle --format=esm --target=es2022 --minify --legal-comments=external --outdir=dist/assets",
+    "preview": "python3 -m http.server 4173 --bind 127.0.0.1 --directory dist",
+    "desktop": "npm run build && electron .",
+    "package:mac": "npm run build && electron-builder --mac --arm64 --publish never",
+    "package:windows": "npm run build && electron-builder --win --x64 --publish never"
+  },
+  "devDependencies": {
+    "@mapbox/vector-tile": "2.0.4",
+    "electron": "45.3.2",
+    "electron-builder": "26.18.1",
+    "esbuild": "0.28.0",
+    "mediabunny": "1.66.0",
+    "pbf": "4.0.1"
+  },
+  "productName": "BMW Drive Recorder Player",
+  "description": "An independent player and MP4 converter for BMW Drive Recorder exports.",
+  "author": "BMW Drive Recorder Player contributors",
+  "license": "GPL-3.0-only",
+  "main": "desktop/main.cjs"
+}

@@ -1,0 +1,29 @@
+appId: io.github.beanbaguk.bmwdriverecorderplayer
+productName: BMW Drive Recorder Player
+directories:
+  output: release
+files:
+  - desktop/main.cjs
+  - dist/index.html
+  - dist/assets/**
+  - LICENSE
+  - THIRD_PARTY_NOTICES.txt
+asar: true
+npmRebuild: false
+publish: null
+mac:
+  target: dmg
+  icon: desktop/recorder.png
+  category: public.app-category.video
+  identity: "-"
+  artifactName: BMW-Drive-Recorder-Player-${version}-mac-arm64.${ext}
+dmg:
+  sign: false
+win:
+  target: nsis
+  icon: desktop/recorder.png
+  artifactName: BMW-Drive-Recorder-Player-${version}-windows-x64-setup.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
