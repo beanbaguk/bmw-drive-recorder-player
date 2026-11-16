@@ -9,29 +9,33 @@ This independent project is not affiliated with or endorsed by BMW. The BMW name
 | Choose how to use it | |
 | --- | --- |
 | **Web or Chrome app** | [Open the free player](https://beanbaguk.github.io/bmw-drive-recorder-player/). On desktop Chrome, use **Get the app** for installation instructions. |
-| **Mac with Apple Silicon** | [Download for Mac (.dmg)](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.3/BMW-Drive-Recorder-Player-1.0.3-mac-arm64.dmg). This build is unnotarized and macOS may block it. |
-| **Windows 64-bit** | [Download for Windows (.exe)](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.3/BMW-Drive-Recorder-Player-1.0.3-windows-x64-setup.exe). The unsigned installer may show a security warning. |
+| **Mac with Apple Silicon** | [Download for Mac (.dmg)](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.1.0/BMW-Drive-Recorder-Player-1.1.0-mac-arm64.dmg). This build is unnotarized and macOS may block it. |
+| **Windows 64-bit** | [Download for Windows (.exe)](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.1.0/BMW-Drive-Recorder-Player-1.1.0-windows-x64-setup.exe). The unsigned installer may show a security warning. |
 
-[Release notes and file checksums](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/tag/v1.0.3)
+[Release notes and file checksums](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/tag/v1.1.0)
 
 ## Use the player
 
 1. Export a Drive Recorder recording from the vehicle to a USB drive.
-2. Drop the recording folder into the player or select the matching `.ts` video and `Metadata.json`.
-3. Enable **Include VIN in video** if you want the vehicle ID visible in the MP4. The option starts off for each recording. If the metadata has no valid VIN, the option stays disabled and you can convert normally without it.
-4. Select **Convert to MP4**, play the result, then select **Download MP4** to save it.
+2. Drop the export folder into the player, or select one `.ts` video with its JSON, or one to four camera `.mp4` videos with their matching XML. Keep the original camera filenames; select either the normal or raw set, not both.
+3. Choose **km/h** or **mph**, and **European**, **US**, or **As recorded** date formatting. If a slash date is ambiguous, choose its original month/day or day/month order. This does not change its time zone.
+4. Optionally add a **car model or name** (36 characters), **registration** (14), and **name or nickname** (24). Empty fields and their labels are omitted from the video. Text shrinks slightly, wraps where appropriate, and is shortened with an ellipsis if needed to keep it within its row.
+5. Enable **Include VIN in video** if wanted. This starts off for each recording and is unavailable when the source has no valid VIN.
+6. Select **Convert to MP4**, play the result, then **Download MP4**.
 
-Conversion and playback run on your computer. The GPS route is drawn locally. The optional **Include road map** setting requests background tiles from OpenFreeMap, which reveals the approximate map area to the provider. The app never uploads the source files or stores a copy of the rendered video online.
+Conversion and playback run on your computer. The GPS route is drawn locally. The optional **Include road map** setting requests background tiles from OpenFreeMap, which reveals the approximate map area to the provider. The app never uploads source files or stores a copy of the rendered video online. Optional identity text is not saved between app sessions; **Clear recording** clears it.
 
-The player and video overlay labels appear in Spanish when the browser or desktop system uses Spanish as its primary language. Other languages use English. The video displays the date and time stored in the recording.
+The interface and overlay labels use Spanish when the browser or desktop system uses Spanish as its primary language, and English otherwise. An English (US) locale initially selects mph and US display; other locales initially select km/h and European display. Both settings can be changed freely.
 
 ## Recording compatibility
 
-The player accepts a `.ts` video and matching `Metadata.json`. It supports both the iDrive 7 `velocity` field and the unit-labelled `velocity_KM/H` field found in an iDrive 8.5 export. Speed is displayed in km/h; the separate `velocity_MP/H` value is not used. VIN is optional.
+- **TS + JSON:** iDrive 7 `velocity` (km/h), and iDrive 8/8.5 `velocity_KM/H` and `velocity_MP/H` (including mph stored as text). A source value in the selected unit is preserved; conversion using 1 mile = 1.609344 km is used only when that unit is absent. VIN is optional.
+- **Camera MP4 + XML:** BMW `<DATA><LOG><ENTRY>` metadata with `ID`, `DATE_UTC`, `TIME_UTC`, `VELOCITY_KMH`, `LATITUDE`, and `LONGITUDE`. Sparse IDs determine timing. The four camera positions are composed into a grid without stretching or cropping; omitted cameras are labelled. Original English, German, Spanish and French camera-position names are recognized. Camera filenames and XML must share an export prefix, and camera start times and durations must agree within 0.15 seconds.
+- **Dates:** dotted day/month/year, slash month/day/year or day/month/year, ISO dates, and 12-hour or 24-hour clocks. Ambiguous slash dates require an explicit source order. Recorded clock values are never shifted to the viewer's timezone; XML clocks are marked UTC.
 
-Full conversion, playback, seeking, and MP4 download have been tested locally on Mac with real iDrive 7 and iDrive 8.5 recordings.
+Compatibility is based on the actual files, not the iDrive version alone. iDrive 9 has not been verified with a representative export. Separate camera MP4 output is silent, matching the BMW camera fixtures tested here.
 
-iDrive 8/8.5 recordings using these formats are supported. Other export formats, including standalone `.mp4` files, are not covered by this importer. Compatibility depends on the exported files, not just the iDrive version.
+Validation includes unit tests, browser conversion/playback/seeking/download, and packaged Mac and Windows app checks. Real iDrive 7 and 8.5 TS exports are tested locally; public CI uses generated footage and synthetic metadata. The MP4/XML importer is also tested locally against the public sample in [drive-recorder-composer](https://github.com/domajstorovic/drive-recorder-composer/tree/master/tests/fixtures/sample). No owner's recordings, VIN or route are included in the repository or CI.
 
 ## Build from source
 
@@ -39,7 +43,7 @@ Install Node.js 24, then run `npm ci`. The same HTML, CSS, and JavaScript are us
 
 | Command | Result |
 | --- | --- |
-| `npm test` | Check both metadata formats, optional VIN handling, and validation |
+| `npm test` | Check JSON/XML telemetry, dates, units, camera grouping, optional text, and validation |
 | `npm run desktop` | Build and open a local development copy in Electron |
 | `npm run package:mac` | Apple Silicon `.app` and `.dmg` on macOS |
 | `npm run package:windows` | 64-bit Windows setup `.exe` on Windows |
@@ -47,7 +51,7 @@ Install Node.js 24, then run `npm ci`. The same HTML, CSS, and JavaScript are us
 
 Desktop packages appear in `release/`. Local packages are intended for testing. Public Mac distribution requires Developer ID signing and notarization. A Windows publisher certificate can be configured before building a signed installer.
 
-The recorder's date and time are displayed as recorded. Verification checks the file formats and recording durations. Pair files from the same export.
+The recorder's date and time retain their original time zone. Verification checks the file formats and recording durations. Pair files from the same export.
 
 ## Notarize a Mac release
 
@@ -63,7 +67,7 @@ npm run package:mac -- \
 Submit the signed disk image from `release/`. Replace the filename below with the one from your build.
 
 ```sh
-DMG="release/BMW-Drive-Recorder-Player-1.0.3-mac-arm64.dmg"
+DMG="release/BMW-Drive-Recorder-Player-1.1.0-mac-arm64.dmg"
 xcrun notarytool submit "$DMG" --keychain-profile "drive-recorder-notary" --wait
 ```
 

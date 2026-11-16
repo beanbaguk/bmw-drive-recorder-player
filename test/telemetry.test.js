@@ -47,7 +47,8 @@ test('iDrive 8.5 uses km/h rather than the rounded mph string and allows a blank
   const modern = await read(recording('modern', ''));
   const legacy = await read(recording());
   assert.equal(modern.vin, null);
-  assert.deepEqual(modern.samples, legacy.samples);
+  assert.deepEqual(modern.samples.map(({ mph, ...rest }) => rest), legacy.samples.map(({ mph, ...rest }) => rest));
+  assert.equal(modern.samples[1].mph, 18.83);
   assert.deepEqual(modern.gps, legacy.gps);
   assert.equal(modern.sampleRate, 30);
   // Telemetry cadence is independent of the video's frame rate.
@@ -80,6 +81,7 @@ test('missing or malformed speed is still rejected for both formats', async () =
   for (const format of ['legacy', 'modern']) {
     const field = format === 'legacy' ? 'velocity' : 'velocity_KM/H';
     for (const value of [undefined, null, '', '30.3', -1, true, {}]) {
+      if (format === 'modern' && value === undefined) continue; // A missing km/h field now falls back to mph.
       const data = recording(format);
       data[0].entries[1][field] = value;
       await assert.rejects(read(data), errorKey('invalidReading'));
