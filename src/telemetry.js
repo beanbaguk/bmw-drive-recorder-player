@@ -40,7 +40,11 @@ export async function readTelemetry(file) {
   const transitions = [];
   const gps = [];
   const samples = data[0].entries.map((entry, index) => {
-    const { id, date, time, velocity, latitude, longitude } = entry ?? {};
+    const { id, date, time, latitude, longitude } = entry ?? {};
+    // iDrive 7 uses velocity (km/h); the iDrive 8/8.5 format names the unit.
+    // Keep the km/h reading, not the separately rounded velocity_MP/H value.
+    const velocity = Object.hasOwn(entry ?? {}, 'velocity_KM/H')
+      ? entry['velocity_KM/H'] : entry?.velocity;
     if (!Number.isSafeInteger(id) || id <= previousId || typeof date !== 'string' ||
         typeof time !== 'string' || !Number.isFinite(velocity) || velocity < 0) {
       throw new RecordingError('invalidReading');

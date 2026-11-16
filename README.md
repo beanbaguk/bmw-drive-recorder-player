@@ -9,21 +9,29 @@ This independent project is not affiliated with or endorsed by BMW. The BMW name
 | Choose how to use it | |
 | --- | --- |
 | **Web or Chrome app** | [Open the free player](https://beanbaguk.github.io/bmw-drive-recorder-player/). On desktop Chrome, use **Get the app** for installation instructions. |
-| **Mac with Apple Silicon** | [Download for Mac (.dmg)](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.2/BMW-Drive-Recorder-Player-1.0.2-mac-arm64.dmg). This build is unnotarized and macOS may block it. |
-| **Windows 64-bit** | [Download for Windows (.exe)](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.2/BMW-Drive-Recorder-Player-1.0.2-windows-x64-setup.exe). The unsigned installer may show a security warning. |
+| **Mac with Apple Silicon** | [Download for Mac (.dmg)](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.3/BMW-Drive-Recorder-Player-1.0.3-mac-arm64.dmg). This build is unnotarized and macOS may block it. |
+| **Windows 64-bit** | [Download for Windows (.exe)](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.3/BMW-Drive-Recorder-Player-1.0.3-windows-x64-setup.exe). The unsigned installer may show a security warning. |
 
-[Release notes and file checksums](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/tag/v1.0.2)
+[Release notes and file checksums](https://github.com/beanbaguk/bmw-drive-recorder-player/releases/tag/v1.0.3)
 
 ## Use the player
 
 1. Export a Drive Recorder recording from the vehicle to a USB drive.
 2. Drop the recording folder into the player or select the matching `.ts` video and `Metadata.json`.
-3. Enable **Include VIN in video** if you want the vehicle ID visible in the MP4. The option starts off for each recording.
+3. Enable **Include VIN in video** if you want the vehicle ID visible in the MP4. The option starts off for each recording. If the metadata has no valid VIN, the option stays disabled and you can convert normally without it.
 4. Select **Convert to MP4**, play the result, then select **Download MP4** to save it.
 
 Conversion and playback run on your computer. The GPS route is drawn locally. The optional **Include road map** setting requests background tiles from OpenFreeMap, which reveals the approximate map area to the provider. The app never uploads the source files or stores a copy of the rendered video online.
 
 The player and video overlay labels appear in Spanish when the browser or desktop system uses Spanish as its primary language. Other languages use English. The video displays the date and time stored in the recording.
+
+## Recording compatibility
+
+The player accepts a `.ts` video and matching `Metadata.json`. It supports both the iDrive 7 `velocity` field and the unit-labelled `velocity_KM/H` field found in an iDrive 8.5 export. Speed is displayed in km/h; the separate `velocity_MP/H` value is not used. VIN is optional.
+
+Full conversion, playback, seeking, and MP4 download have been tested locally on Mac with real iDrive 7 and iDrive 8.5 recordings.
+
+iDrive 8/8.5 recordings using these formats are supported. Other export formats, including standalone `.mp4` files, are not covered by this importer. Compatibility depends on the exported files, not just the iDrive version.
 
 ## Build from source
 
@@ -31,6 +39,7 @@ Install Node.js 24, then run `npm ci`. The same HTML, CSS, and JavaScript are us
 
 | Command | Result |
 | --- | --- |
+| `npm test` | Check both metadata formats, optional VIN handling, and validation |
 | `npm run desktop` | Build and open a local development copy in Electron |
 | `npm run package:mac` | Apple Silicon `.app` and `.dmg` on macOS |
 | `npm run package:windows` | 64-bit Windows setup `.exe` on Windows |
@@ -54,7 +63,7 @@ npm run package:mac -- \
 Submit the signed disk image from `release/`. Replace the filename below with the one from your build.
 
 ```sh
-DMG="release/BMW-Drive-Recorder-Player-1.0.2-mac-arm64.dmg"
+DMG="release/BMW-Drive-Recorder-Player-1.0.3-mac-arm64.dmg"
 xcrun notarytool submit "$DMG" --keychain-profile "drive-recorder-notary" --wait
 ```
 

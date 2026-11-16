@@ -1,9 +1,10 @@
 {
   "name": "bmw-drive-recorder-player",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "node --test",
     "build": "esbuild src/player.js src/worker.js --bundle --format=esm --target=es2022 --minify --legal-comments=external --outdir=dist/assets",
     "preview": "python3 -m http.server 4173 --bind 127.0.0.1 --directory dist",
     "desktop": "npm run build && electron .",

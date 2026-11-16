@@ -55,7 +55,7 @@ export const pageSpanish = {
 const english = {
   verified: 'Verified',
   verification: (duration, count, hasGps) => `File formats and durations verified · ${duration} seconds · ${count} readings${hasGps ? '' : ' · GPS unavailable'}`,
-  noVin: 'This recording has no valid VIN.',
+  noVin: 'No VIN is available in this recording. You can convert it without one.',
   stopped: 'The video converter stopped. Try again in a current desktop browser.',
   rendering: percent => `Rendering your recording · ${percent}`,
   checkFiles: 'Checking video and metadata…',
@@ -97,7 +97,7 @@ const english = {
 const spanish = {
   verified: 'Verificado',
   verification: (duration, count, hasGps) => `Formato y duración verificados · ${duration} segundos · ${count} lecturas${hasGps ? '' : ' · GPS no disponible'}`,
-  noVin: 'Esta grabación no tiene un VIN válido.',
+  noVin: 'Esta grabación no tiene un VIN disponible. Puedes convertirla sin él.',
   stopped: 'El conversor de vídeo se ha detenido. Vuelve a intentarlo con un navegador de escritorio actualizado.',
   rendering: percent => `Convirtiendo la grabación · ${percent}`,
   checkFiles: 'Comprobando el vídeo y los metadatos…',
