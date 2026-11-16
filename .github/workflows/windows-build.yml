@@ -1,7 +1,7 @@
-name: Build and test Windows v1.0.3
+name: Build and test Windows v1.1.0
 on:
   push:
-    branches: [qa/windows-v1.0.3]
+    branches: [qa/windows-v1.1.0]
 permissions:
   contents: read
 jobs:
@@ -24,16 +24,16 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Metadata tests failed' }
           npm run package:windows
           if ($LASTEXITCODE -ne 0) { throw 'Windows packaging failed' }
-      - name: Install and test both recording formats in Spanish
+      - name: Install and test all recording formats and optional fields in Spanish
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           Set-WinUserLanguageList -LanguageList (New-WinUserLanguageList 'es-ES') -Force
           Set-Culture -CultureInfo 'es-ES'
-          $qaDir = Join-Path $env:RUNNER_TEMP 'bmw-v103-qa'
+          $qaDir = Join-Path $env:RUNNER_TEMP 'bmw-v110-qa'
           New-Item -ItemType Directory -Path $qaDir | Out-Null
           $installDir = Join-Path $qaDir 'installed'
-          $setup = Join-Path $env:GITHUB_WORKSPACE 'release/BMW-Drive-Recorder-Player-1.0.3-windows-x64-setup.exe'
+          $setup = Join-Path $env:GITHUB_WORKSPACE 'release/BMW-Drive-Recorder-Player-1.1.0-windows-x64-setup.exe'
           $installed = Start-Process -FilePath $setup -ArgumentList "/S /D=$installDir" -Wait -PassThru
           if ($installed.ExitCode -ne 0) { throw 'Installer failed' }
           npm install --prefix $qaDir --no-save --no-fund --no-audit playwright-core@1.65.1 ffmpeg-static@5.3.0
@@ -45,9 +45,9 @@ jobs:
           Get-FileHash -Algorithm SHA256 $setup | Format-List
       - uses: actions/upload-artifact@v4
         with:
-          name: windows-v1.0.3-tested
+          name: windows-v1.1.0-tested
           path: |
-            release/BMW-Drive-Recorder-Player-1.0.3-windows-x64-setup.exe
+            release/BMW-Drive-Recorder-Player-1.1.0-windows-x64-setup.exe
             release/windows-test-results.json
           if-no-files-found: error
           retention-days: 7
