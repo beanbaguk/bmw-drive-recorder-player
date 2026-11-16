@@ -48,12 +48,12 @@
       <section class="card import" aria-labelledby="import-heading">
         <div class="card-heading">
           <span class="step-icon"><svg class="icon" aria-hidden="true"><use href="#icon-upload"/></svg></span>
-          <div><h2 id="import-heading" data-i18n="openRecording">Open a recording</h2><p data-i18n="selectFiles">Select the two files from the same BMW export.</p></div>
+          <div><h2 id="import-heading" data-i18n="openRecording">Open a recording</h2><p data-i18n="selectFiles">Select a TS video and its JSON, or the camera MP4 videos and their XML.</p></div>
         </div>
 
-        <input id="picker" type="file" accept=".ts,.json" multiple hidden>
-        <input id="video-picker" type="file" accept=".ts" hidden>
-        <input id="metadata-picker" type="file" accept=".json" hidden>
+        <input id="picker" type="file" accept=".ts,.json,.mp4,.xml" multiple hidden>
+        <input id="video-picker" type="file" accept=".ts,.mp4" multiple hidden>
+        <input id="metadata-picker" type="file" accept=".json,.xml" hidden>
         <div class="drop-zone" id="drop-zone">
           <svg class="icon drop-icon" aria-hidden="true"><use href="#icon-upload"/></svg>
           <strong data-i18n="dropFiles">Drop your BMW export files here</strong>
@@ -61,17 +61,37 @@
         </div>
 
         <div class="file-list">
-          <button id="video-slot" class="file-row" type="button" aria-label="Choose or replace the TS video" data-i18n-label="videoPicker">
+          <button id="video-slot" class="file-row" type="button" aria-label="Choose or replace the TS or MP4 videos" data-i18n-label="videoPicker">
             <span class="file-icon"><svg class="icon" aria-hidden="true"><use href="#icon-video"/></svg></span>
-            <span class="file-copy"><strong id="video-title" data-i18n="videoTitle">Recorder video</strong><span id="video-detail" data-i18n="videoDetail">.ts file</span></span>
+            <span class="file-copy"><strong id="video-title" data-i18n="videoTitle">Recorder video</strong><span id="video-detail" data-i18n="videoDetail">One .ts or up to four .mp4 files</span></span>
             <span class="file-state"><svg class="icon" aria-hidden="true"><use id="video-state" href="#icon-plus"/></svg></span>
           </button>
-          <button id="metadata-slot" class="file-row" type="button" aria-label="Choose or replace the metadata JSON" data-i18n-label="metadataPicker">
+          <button id="metadata-slot" class="file-row" type="button" aria-label="Choose or replace the JSON or XML metadata" data-i18n-label="metadataPicker">
             <span class="file-icon"><svg class="icon" aria-hidden="true"><use href="#icon-file"/></svg></span>
-            <span class="file-copy"><strong id="metadata-title" data-i18n="metadataTitle">Recording metadata</strong><span id="metadata-detail">Metadata.json</span></span>
+            <span class="file-copy"><strong id="metadata-title" data-i18n="metadataTitle">Recording metadata</strong><span id="metadata-detail" data-i18n="metadataDetail">.json or .xml file</span></span>
             <span class="file-state"><svg class="icon" aria-hidden="true"><use id="metadata-state" href="#icon-plus"/></svg></span>
           </button>
         </div>
+
+        <div class="format-options">
+          <label for="speed-unit"><span data-i18n="speedUnit">Speed unit</span><select id="speed-unit"><option value="kmh">km/h</option><option value="mph">mph</option></select></label>
+          <label for="date-format"><span data-i18n="dateFormat">Date format in video</span><select id="date-format"><option value="eu" data-i18n="europeanDate">European · DD.MM.YYYY · 24 h</option><option value="us" data-i18n="americanDate">US · MM/DD/YYYY · 12 h</option><option value="original" data-i18n="originalDate">As recorded</option></select></label>
+        </div>
+        <div class="source-date">
+          <label for="source-date-order" data-i18n="sourceDateOrder">Original date order</label>
+          <select id="source-date-order" aria-describedby="source-date-help"><option value="auto" data-i18n="autoDate">Detect automatically</option><option value="us" data-i18n="usOrder">Month / day / year</option><option value="eu" data-i18n="euOrder">Day / month / year</option></select>
+          <p id="source-date-help" data-i18n="sourceDateHelp">For an ambiguous source date, choose its original order. The recorded time zone stays unchanged.</p>
+        </div>
+        <fieldset class="identity-fields">
+          <legend data-i18n="optionalDetails">Optional text in video</legend>
+          <p data-i18n="detailsHelp">Empty fields are hidden. Longer text adjusts to fit the available space.</p>
+          <label for="car-model"><span data-i18n="carModel">Car model or name</span><span id="car-model-count" class="field-count">0 / 36</span></label>
+          <input id="car-model" type="text" autocomplete="off" aria-describedby="car-model-count">
+          <label for="registration"><span data-i18n="registration">Registration</span><span id="registration-count" class="field-count">0 / 14</span></label>
+          <input id="registration" type="text" autocomplete="off" aria-describedby="registration-count">
+          <label for="name"><span data-i18n="name">Name or nickname</span><span id="name-count" class="field-count">0 / 24</span></label>
+          <input id="name" type="text" autocomplete="off" aria-describedby="name-count">
+        </fieldset>
 
         <div class="export-option">
           <label><input id="include-map" type="checkbox"> <span data-i18n="includeMap">Include road map</span></label>
@@ -126,15 +146,15 @@
         <div class="get-app-option">
           <h3 data-i18n="macHeading">Mac with Apple Silicon</h3>
           <p data-i18n="macHelp">The desktop build is unnotarized. macOS may block it. You can also use the web player in Chrome.</p>
-          <a class="button download" href="https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.3/BMW-Drive-Recorder-Player-1.0.3-mac-arm64.dmg" data-i18n="macDownload">Download for Mac</a>
+          <a class="button download" href="https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.1.0/BMW-Drive-Recorder-Player-1.1.0-mac-arm64.dmg" data-i18n="macDownload">Download for Mac</a>
         </div>
         <div class="get-app-option">
           <h3 data-i18n="windowsHeading">Windows 64-bit</h3>
           <p data-i18n="windowsHelp">The installer is unsigned. Windows may show a security warning.</p>
-          <a class="button download" href="https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.0.3/BMW-Drive-Recorder-Player-1.0.3-windows-x64-setup.exe" data-i18n="windowsDownload">Download for Windows</a>
+          <a class="button download" href="https://github.com/beanbaguk/bmw-drive-recorder-player/releases/download/v1.1.0/BMW-Drive-Recorder-Player-1.1.0-windows-x64-setup.exe" data-i18n="windowsDownload">Download for Windows</a>
         </div>
       </div>
-      <a class="release-link" href="https://github.com/beanbaguk/bmw-drive-recorder-player/releases/tag/v1.0.3" data-i18n="releaseNotes">Release notes and file checksums</a>
+      <a class="release-link" href="https://github.com/beanbaguk/bmw-drive-recorder-player/releases/tag/v1.1.0" data-i18n="releaseNotes">Release notes and file checksums</a>
     </section>
   </main>
   <footer class="wrap footer"><span data-i18n="footerProject">Independent project for BMW enthusiasts.</span><span data-i18n="footerPrivacy">Video and metadata stay on your device.</span></footer>

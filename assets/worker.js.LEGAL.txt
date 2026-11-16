@@ -18,6 +18,8 @@ mediabunny/dist/modules/src/packet.js:
 mediabunny/dist/modules/src/resample.js:
 mediabunny/dist/modules/src/demuxer.js:
 mediabunny/dist/modules/src/isobmff/isobmff-misc.js:
+mediabunny/dist/modules/src/aes.js:
+mediabunny/dist/modules/src/isobmff/isobmff-demuxer.js:
 mediabunny/dist/modules/src/adts/adts-reader.js:
 mediabunny/dist/modules/src/adts/adts-demuxer.js:
 mediabunny/dist/modules/src/mpeg-ts/mpeg-ts-misc.js:
