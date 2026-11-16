@@ -1,0 +1,53 @@
+name: Build and test Windows v1.0.3
+on:
+  push:
+    branches: [qa/windows-v1.0.3]
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Test source and build Windows installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          npm ci --no-fund --no-audit
+          if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed' }
+          npm test
+          if ($LASTEXITCODE -ne 0) { throw 'Metadata tests failed' }
+          npm run package:windows
+          if ($LASTEXITCODE -ne 0) { throw 'Windows packaging failed' }
+      - name: Install and test both recording formats in Spanish
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-WinUserLanguageList -LanguageList (New-WinUserLanguageList 'es-ES') -Force
+          Set-Culture -CultureInfo 'es-ES'
+          $qaDir = Join-Path $env:RUNNER_TEMP 'bmw-v103-qa'
+          New-Item -ItemType Directory -Path $qaDir | Out-Null
+          $installDir = Join-Path $qaDir 'installed'
+          $setup = Join-Path $env:GITHUB_WORKSPACE 'release/BMW-Drive-Recorder-Player-1.0.3-windows-x64-setup.exe'
+          $installed = Start-Process -FilePath $setup -ArgumentList "/S /D=$installDir" -Wait -PassThru
+          if ($installed.ExitCode -ne 0) { throw 'Installer failed' }
+          npm install --prefix $qaDir --no-save --no-fund --no-audit playwright-core@1.65.1 ffmpeg-static@5.3.0
+          if ($LASTEXITCODE -ne 0) { throw 'Test tool installation failed' }
+          Copy-Item qa/desktop-release.cjs (Join-Path $qaDir 'check.cjs')
+          node (Join-Path $qaDir 'check.cjs') (Join-Path $installDir 'BMW Drive Recorder Player.exe') $qaDir
+          if ($LASTEXITCODE -ne 0) { throw 'Installed app tests failed' }
+          Copy-Item (Join-Path $qaDir 'results.json') release/windows-test-results.json
+          Get-FileHash -Algorithm SHA256 $setup | Format-List
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-v1.0.3-tested
+          path: |
+            release/BMW-Drive-Recorder-Player-1.0.3-windows-x64-setup.exe
+            release/windows-test-results.json
+          if-no-files-found: error
+          retention-days: 7
