@@ -135,11 +135,12 @@ async function main() {
       }
       }
       if (fixture.name === 'mp4-xml') {
+        // Check camera identity with tolerance for H.264 colour-space conversion.
         for (const [x, y, expected] of [[320, 240, 'red'], [960, 240, 'blue'], [320, 720, 'green'], [960, 720, 'yellow']]) {
           const pixel = spawnSync(ffmpeg, ['-v', 'error', '-ss', '3', '-i', saved, '-vf', `format=rgb24,crop=1:1:${x}:${y}`, '-frames:v', '1', '-f', 'rawvideo', 'pipe:1']);
           assert.equal(pixel.status, 0);
           const [r, g, b] = pixel.stdout;
-          assert.ok(expected === 'red' ? r > 220 && g < 20 && b < 20 : expected === 'blue' ? b > 220 && r < 20 && g < 20 : expected === 'green' ? g > 100 && r < 20 && b < 20 : r > 220 && g > 220 && b < 20, `Camera position ${expected}`);
+          assert.ok(expected === 'red' ? r > 200 && g < 60 && b < 60 : expected === 'blue' ? b > 200 && r < 60 && g < 60 : expected === 'green' ? g > 80 && r < 40 && b < 40 : r > 200 && g > 200 && b < 60, `Camera position ${expected}`);
         }
       }
       const bytes = await fs.readFile(saved);
