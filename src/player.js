@@ -167,7 +167,7 @@ function startWorker(action) {
       preview.hidden = false;
       placeholder.hidden = true;
       download.href = url;
-      download.download = files.metadata.name.replace(/\.(json|xml)$/i, '') + '_with_telemetry.mp4';
+      download.download = (files.video.length === 1 && /\.ts$/i.test(files.video[0].name) ? files.video[0].name : files.metadata.name).replace(/\.(ts|json|xml)$/i, '') + '_with_telemetry.mp4';
       download.removeAttribute('aria-disabled');
       const mapNote = mapOption.checked && info.hasGps && !data.roads ? ` ${messages.mapUnavailable}` : '';
       resultStatus.textContent = messages.mp4Ready(formatBytes(data.file.size)) + mapNote;

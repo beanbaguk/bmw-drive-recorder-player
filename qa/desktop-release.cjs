@@ -88,7 +88,7 @@ async function main() {
       if (fixture.hasVin) await page.locator('#include-vin').check();
       else assert.match(await page.locator('#vin-help').textContent(), /Puedes convertirla sin él/);
       await page.locator('#speed-unit').selectOption('mph');
-      await page.locator('#date-format').selectOption('eu');
+      await page.locator('#date-format').selectOption(fixture.name === 'us-mph' ? 'us' : 'eu');
       if (fixture.name === 'mp4-xml') {
         await page.locator('#car-model').fill('W'.repeat(50));
         await page.locator('#registration').fill('W'.repeat(20));
@@ -133,6 +133,14 @@ async function main() {
         if (attempt >= 60) throw new Error('Saving timed out');
         await new Promise(resolve => setTimeout(resolve, 250));
       }
+      }
+      if (fixture.name === 'mp4-xml') {
+        for (const [x, y, expected] of [[320, 240, 'red'], [960, 240, 'blue'], [320, 720, 'green'], [960, 720, 'yellow']]) {
+          const pixel = spawnSync(ffmpeg, ['-v', 'error', '-ss', '3', '-i', saved, '-vf', `format=rgb24,crop=1:1:${x}:${y}`, '-frames:v', '1', '-f', 'rawvideo', 'pipe:1']);
+          assert.equal(pixel.status, 0);
+          const [r, g, b] = pixel.stdout;
+          assert.ok(expected === 'red' ? r > 220 && g < 20 && b < 20 : expected === 'blue' ? b > 220 && r < 20 && g < 20 : expected === 'green' ? g > 100 && r < 20 && b < 20 : r > 220 && g > 220 && b < 20, `Camera position ${expected}`);
+        }
       }
       const bytes = await fs.readFile(saved);
       assert.equal(bytes.subarray(4, 8).toString(), 'ftyp');

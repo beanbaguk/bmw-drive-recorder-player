@@ -1,6 +1,7 @@
 import { XMLParser, XMLValidator } from 'fast-xml-parser';
 import { RecordingError } from './i18n.js';
 
+const coordinate = value => typeof value === 'string' && /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim()) ? Number(value) : NaN;
 const numeric = value => typeof value === 'string' && /^\d+(?:\.\d+)?$/.test(value.trim()) ? Number(value) : NaN;
 
 function dateOrder(entries, requested) {
@@ -81,7 +82,7 @@ export async function readTelemetry(file, { sourceDateOrder = 'auto' } = {}) {
       if (!data || !Array.isArray(data.LOG?.ENTRY)) throw new Error();
       root = { VIN: data.VIN, entries: data.LOG.ENTRY.map(entry => ({
         id: numeric(entry.ID), date: entry.DATE_UTC, time: entry.TIME_UTC,
-        latitude: Number(entry.LATITUDE), longitude: Number(entry.LONGITUDE),
+        latitude: coordinate(entry.LATITUDE), longitude: coordinate(entry.LONGITUDE),
         ...(Object.hasOwn(entry, 'VELOCITY_KMH') ? { 'velocity_KM/H': numeric(entry.VELOCITY_KMH) } : {}),
         ...(Object.hasOwn(entry, 'VELOCITY_MPH') ? { 'velocity_MP/H': entry.VELOCITY_MPH } : {})
       })) };

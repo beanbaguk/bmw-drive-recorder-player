@@ -84,3 +84,11 @@ test('optional identity fields omit whitespace, remove controls and cap grapheme
   assert.equal(cleanText('👩‍👩‍👧‍👦'.repeat(25), 24), '👩‍👩‍👧‍👦'.repeat(24));
   assert.equal(cleanText('W'.repeat(100), 36).length, 36);
 });
+
+test('blank and malformed XML coordinates remain unavailable instead of becoming a false GPS fix', async () => {
+  const text = xml([[1, '12:38:42'], [31, '12:38:43']]);
+  for (const latitude of ['', ' ', 'north', '91']) {
+    const parsed = await readTelemetry(new Blob([text.replaceAll('50.001', latitude)]));
+    assert.deepEqual(parsed.gps, []);
+  }
+});
