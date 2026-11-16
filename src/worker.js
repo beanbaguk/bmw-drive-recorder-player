@@ -5,7 +5,7 @@ self.onmessage = async ({ data }) => {
   const { action, video, metadata, info, options, language } = data;
   try {
     if (action === 'inspect') {
-      self.postMessage({ type: 'verified', info: await inspectRecording(video, metadata) });
+      self.postMessage({ type: 'verified', info: await inspectRecording(video, metadata, options) });
       return;
     }
     if (action === 'render') {

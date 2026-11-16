@@ -1,3 +1,4 @@
+import { textLimits } from './overlay.js';
 import { languageFor, messagesFor, pageSpanish } from './i18n.js';
 
 const locale = location.protocol === 'recorder:'
@@ -38,6 +39,16 @@ const error = el('error');
 const verification = el('verification');
 const resultStatus = el('result-status');
 const files = { video: null, metadata: null };
+const speedUnit = el('speed-unit'), dateFormat = el('date-format'), sourceDateOrder = el('source-date-order');
+const identityInputs = { carModel: el('car-model'), registration: el('registration'), name: el('name') };
+const optionControls = [speedUnit, dateFormat, sourceDateOrder, ...Object.values(identityInputs)];
+if (/^en-US\b/i.test(locale)) { speedUnit.value = 'mph'; dateFormat.value = 'us'; }
+function exportOptions() {
+  return { includeRoadMap: mapOption.checked, includeVin: vinOption.checked,
+    speedUnit: speedUnit.value, dateFormat: dateFormat.value, sourceDateOrder: sourceDateOrder.value,
+    ...Object.fromEntries(Object.entries(identityInputs).map(([key, input]) => [key, input.value])) };
+}
+
 const defaults = {
   video: [el('video-title').textContent, el('video-detail').textContent],
   metadata: [el('metadata-title').textContent, el('metadata-detail').textContent]
@@ -66,7 +77,8 @@ function formatBytes(bytes) {
 }
 
 function showSlot(name, verified) {
-  const file = files[name];
+  const selected = files[name];
+  const file = Array.isArray(selected) ? { name: selected.map(file => file.name).join(', '), size: selected.reduce((sum, file) => sum + file.size, 0) } : selected;
   const [title, detail] = defaults[name];
   el(name + '-title').textContent = file?.name ?? title;
   el(name + '-title').title = file?.name ?? '';
@@ -107,7 +119,7 @@ function updateVinOption() {
 
 function setRendering(value) {
   rendering = value;
-  for (const control of [el('browse'), el('video-slot'), el('metadata-slot'), mapOption, clear]) {
+  for (const control of [el('browse'), el('video-slot'), el('metadata-slot'), mapOption, clear, ...optionControls]) {
     control.disabled = value;
   }
   convert.disabled = value || !info;
@@ -155,7 +167,7 @@ function startWorker(action) {
       preview.hidden = false;
       placeholder.hidden = true;
       download.href = url;
-      download.download = files.video.name.replace(/\.ts$/i, '') + '_with_telemetry.mp4';
+      download.download = files.metadata.name.replace(/\.(json|xml)$/i, '') + '_with_telemetry.mp4';
       download.removeAttribute('aria-disabled');
       const mapNote = mapOption.checked && info.hasGps && !data.roads ? ` ${messages.mapUnavailable}` : '';
       resultStatus.textContent = messages.mp4Ready(formatBytes(data.file.size)) + mapNote;
@@ -163,15 +175,15 @@ function startWorker(action) {
   };
   active.postMessage({
     action, ...files, info, language,
-    options: { includeRoadMap: mapOption.checked, includeVin: vinOption.checked }
+    options: exportOptions()
   });
 }
 
 function receive(incoming) {
   if (rendering || !incoming.length) return;
-  const videos = incoming.filter(file => /\.ts$/i.test(file.name));
-  const metadata = incoming.filter(file => /\.json$/i.test(file.name));
-  if (videos.length > 1 || metadata.length > 1 || !videos.length && !metadata.length) {
+  const videos = incoming.filter(file => /\.(ts|mp4)$/i.test(file.name));
+  const metadata = incoming.filter(file => /\.(json|xml)$/i.test(file.name));
+  if (videos.length > 4 || (videos.some(file => /\.ts$/i.test(file.name)) && videos.length > 1) || metadata.length > 1 || !videos.length && !metadata.length) {
     errorMessage(messages.invalidPair);
     return;
   }
@@ -186,7 +198,7 @@ function receive(incoming) {
   clearOutput();
   errorMessage('');
   setVerification('');
-  if (videos.length) files.video = videos[0];
+  if (videos.length) files.video = videos;
   if (metadata.length) files.metadata = metadata[0];
   for (const name of Object.keys(files)) showSlot(name, false);
   clear.hidden = false;
@@ -228,7 +240,7 @@ async function droppedFiles(transfer) {
     while (true) {
       const entries = await new Promise((resolve, reject) => reader.readEntries(resolve, reject));
       if (entries.length === 0) break;
-      fileEntries.push(...entries.filter(entry => entry.isFile && /\.(ts|json)$/i.test(entry.name)));
+      fileEntries.push(...entries.filter(entry => entry.isFile && /\.(ts|json|mp4|xml)$/i.test(entry.name)));
     }
     return Promise.all(fileEntries.map(entry => new Promise((resolve, reject) => entry.file(resolve, reject))));
   }));
@@ -263,11 +275,28 @@ convert.onclick = () => {
   startWorker('render');
 };
 
-vinOption.onchange = () => {
+function settingsChanged() {
   if (!url) return;
   clearOutput();
   resultStatus.textContent = messages.vinChanged;
+}
+for (const control of [vinOption, mapOption, speedUnit, dateFormat]) control.addEventListener('change', settingsChanged);
+sourceDateOrder.onchange = () => {
+  stopWorker(); info = undefined; convert.disabled = true;
+  clearOutput(); updateVinOption(); errorMessage('');
+  if (files.video && files.metadata) { setVerification(messages.checkFiles); startWorker('inspect'); }
 };
+for (const [key, input] of Object.entries(identityInputs)) {
+  input.addEventListener('input', () => {
+    if (input.composing) return;
+    const chars = Array.from(new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(input.value), item => item.segment);
+    input.value = chars.slice(0, textLimits[key]).join('');
+    el(input.id + '-count').textContent = `${Math.min(chars.length, textLimits[key])} / ${textLimits[key]}`;
+    settingsChanged();
+  });
+  input.addEventListener('compositionstart', () => { input.composing = true; });
+  input.addEventListener('compositionend', () => { input.composing = false; input.dispatchEvent(new Event('input')); });
+}
 
 cancel.onclick = () => {
   stopWorker();
@@ -282,6 +311,8 @@ clear.onclick = () => {
   info = undefined;
   updateVinOption();
   files.video = files.metadata = null;
+  sourceDateOrder.value = 'auto';
+  for (const input of Object.values(identityInputs)) { input.value = ''; input.dispatchEvent(new Event('input')); }
   clearOutput();
   setVerification('');
   errorMessage('');
